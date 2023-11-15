@@ -1,26 +1,13 @@
-## Setup
 
-**Note:** For this exercise, we have provided an `.env` file with the database connection string. Normally, you would not commit this file to version control. We are doing it here for simplicity and given that we are using a local SQLite database.
+# Movie ticket booking system.
 
-## Database
+## Requirements
 
-This project should be used with the `movies.db` database in `data/` folder. It is the same database that we used in the previous exercise. You can download a fresh database [here](https://cdn.cs50.net/2022/fall/psets/7/movies.zip) or from [CS50](https://cs50.harvard.edu/x/2023/psets/7/movies/).
 
-## Migrations
-
-We can run migrations with the following command:
-
-```bash
-npm run migrate:latest
-```
-
-## Running the server
-
-In development mode:
-
-```bash
-npm run dev
-```
+* [movie] get a list of movies with their id, title and year by providing a list of their IDs (e.g., /movies?id=133093,816692 should return 2 movies with these IDs, if they exist)
+* [screening] get a list of screenings available for booking. Screenings should include session information (timestamp, number of tickets, number of tickets left) and movies: (title and year).
+* [tickets] get a list of bookings (tickets) they have booked
+* [screening] create a booking (ticket) for movie screening that has some tickets left
 
 In production mode:
 
