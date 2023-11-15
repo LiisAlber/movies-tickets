@@ -4,6 +4,8 @@ import BadRequest from '@/utils/errors/BadRequest';
 import NotFound from '@/utils/errors/NotFound';
 import type { Database } from '@/database';
 import buildRespository from './repository';
+import { getMoviesValidation } from '@/middleware/moviesValidator';
+
 
 export default (db: Database) => {
   const messages = buildRespository(db);
@@ -11,6 +13,7 @@ export default (db: Database) => {
 
   router.get(
     '/',
+    getMoviesValidation,
     jsonRoute(async req => {
       const stringIds = req.query.id;
 

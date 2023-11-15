@@ -26,6 +26,7 @@ export default (db: Database) => {
   router.post('/', jsonRoute(async (req, res, next) => {
     try {
       const { userId, movieId, screeningId, total } = req.body;
+      console.log('Screening ID:', screeningId);
       const screeningData = await screenings.findById(screeningId);
 
       if (!screeningData || screeningData.numberOfTicketsLeft < total) {
@@ -40,8 +41,12 @@ export default (db: Database) => {
         await tickets.create({ userId, movieId, screeningId, total, bookingTimestamp });
         res.status(StatusCodes.CREATED).json({ message: 'Booked successfully!' });
       }
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      if (error.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+        res.status(StatusCodes.BAD_REQUEST).json({ message: 'Invalid screeningId.' });
+      } else {
+        next(error);
+      }
     }
   }));
 

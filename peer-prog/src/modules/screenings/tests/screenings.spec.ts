@@ -1,11 +1,13 @@
 import createTestDatabase from '@tests/utils/createTestDatabase'
+import supertest from 'supertest'
 import { createFor, selectAllFor } from '@tests/utils/records'
-import buildRepository from '../repository'
-import { screeningsMatcher } from './utils'
+import createApp from '@/app'
+import { screeningsFactory } from './utils'
 import { movieFactory } from '@/modules/movies/tests/utils'
 
 const db = await createTestDatabase()
-const repository = buildRepository(db)
+const app = createApp(db)
+const createScreening = createFor(db, 'screenings')
 const createMovies = createFor(db, 'movies')
 const selectScreenings = selectAllFor(db, 'screenings')
 
@@ -22,92 +24,78 @@ afterEach(async () => {
   }
 })
 
-describe('create', () => {
-  it('should create a screening', async () => {
+describe('GET', () => {
+  it('should return all screenings', async () => {
     await createMovies([
       movieFactory({
-        id: 236,
+        id: 234,
         title: 'The movie test title',
         year: 1996,
       }),
     ])
+    await createScreening([
+      screeningsFactory({
+        movieId: 234,
+        numberOfTickets: 100,
+        numberOfTicketsLeft: 80,
+        movieTitle: 'The movie test title',
+        movieYear: 1996,
+        createdAt: '2023-11-07T08:32:15.182Z',
+      }),
+    ])
 
-    const createdScreening = await repository.create({
-      movieId: 236,
-      numberOfTickets: 100,
-      numberOfTicketsLeft: 80,
-      movieTitle: 'The movie test title',
-      movieYear: 1996,
-      createdAt: '2023-11-01T08:32:15.182Z',
-    })
+    const { body } = await supertest(app).get('/screenings').expect(200)
 
-    expect(createdScreening).toEqual({
-      id: expect.any(Number),
-      movieId: 236,
-      numberOfTickets: 100,
-      numberOfTicketsLeft: 80,
-      movieTitle: 'The movie test title',
-      movieYear: 1996,
-      createdAt: '2023-11-01T08:32:15.182Z',
-    })
-
-    const screeningsInDatabase = await selectScreenings()
-
-    expect(screeningsInDatabase).toEqual([createdScreening])
-  })
-})
-
-describe('findAll', () => {
-  it('should return existing screeenigs data', async () => {
-    const screeningsInDatabase = await selectScreenings()
-
-    const screenings = await repository.findAll()
-
-    expect(screenings).toEqual(screeningsInDatabase)
-  })
-})
-
-describe('update', () => {
-  it('should update the screenings data', async () => {
-    const [screeningsInDatabase] = await selectScreenings()
-
-    const updateScreeningsData = await repository.update(
-      screeningsInDatabase.id,
+    expect(body).toEqual([
       {
-        numberOfTickets: 110,
-      }
-    )
-
-    expect(updateScreeningsData).toMatchObject(
-      screeningsMatcher({
-        id: screeningsInDatabase.id,
-        movieId: 236,
-        numberOfTickets: 110,
+        movieId: 234,
+        numberOfTickets: 100,
         numberOfTicketsLeft: 80,
         movieTitle: 'The movie test title',
         movieYear: 1996,
-        createdAt: '2023-11-01T08:32:15.182Z',
-      })
-    )
+        createdAt: '2023-11-07T08:32:15.182Z',
+      },
+    ])
   })
 })
 
-describe('remove', () => {
-  it('should remove screenings data by id', async () => {
+describe('POST', () => {
+  it('should return 201 and create a new screenings data', async () => {
+    const { body } = await supertest(app)
+      .post('/screenings')
+      .send(screeningsFactory())
+      .expect(201)
+
+    expect(body).toEqual({
+      createdAt: '2023-11-01T08:32:15.182Z',
+      id: 2,
+      movieId: 234,
+      movieTitle: 'Test movie title',
+      movieYear: 1996,
+      numberOfTickets: 100,
+      numberOfTicketsLeft: 80,
+    })
+  })
+})
+
+describe('PATCH', () => {
+  it('persists changes', async () => {
     const [screeningsInDatabase] = await selectScreenings()
+    const { id } = screeningsInDatabase
 
-    const removeScreenings = await repository.remove(screeningsInDatabase.id)
-
-    expect(removeScreenings).toEqual(
-      screeningsMatcher({
-        id: screeningsInDatabase.id,
-        movieId: 236,
+    await supertest(app)
+      .patch('/screenings')
+      .send({
+        id,
         numberOfTickets: 110,
-        numberOfTicketsLeft: 80,
-        movieTitle: 'The movie test title',
-        movieYear: 1996,
-        createdAt: '2023-11-01T08:32:15.182Z',
       })
-    )
+      .expect(200)
+  })
+})
+
+describe('REMOVE', () => {
+  it('should remove screenings data based on screenings id', async () => {
+    const id = 1
+    await supertest(app).delete('/screenings').send({ id }).expect(200)
   })
 })

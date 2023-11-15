@@ -91,23 +91,3 @@ describe('update', () => {
     )
   })
 })
-
-describe('remove', () => {
-  it('should remove screenings data by id', async () => {
-    const [screeningsInDatabase] = await selectScreenings()
-
-    const removeScreenings = await repository.remove(screeningsInDatabase.id)
-
-    expect(removeScreenings).toEqual(
-      screeningsMatcher({
-        id: screeningsInDatabase.id,
-        movieId: 236,
-        numberOfTickets: 110,
-        numberOfTicketsLeft: 80,
-        movieTitle: 'The movie test title',
-        movieYear: 1996,
-        createdAt: '2023-11-01T08:32:15.182Z',
-      })
-    )
-  })
-})

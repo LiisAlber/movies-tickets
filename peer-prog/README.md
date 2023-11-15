@@ -17,6 +17,7 @@ Example GET request: /screenings
 Example GET request: /tickets
 
 * [screening] create a booking (ticket) for movie screening that has some tickets left
+
 Example POST request:
 /tickets
 {
