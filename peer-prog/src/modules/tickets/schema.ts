@@ -6,7 +6,7 @@ const schema = z.object({
   userId: z.number(),
   movieId: z.number(),
   screeningId: z.number(),
-  numTickets: z.number(),
+  total: z.number(),
   bookingTimestamp: z.string(),
 })
 

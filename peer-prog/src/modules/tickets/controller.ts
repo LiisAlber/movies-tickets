@@ -6,73 +6,44 @@ import buildRespository from './repository'
 import buildScreeningsRepository from '@/modules/screenings/repository'
 
 export default (db: Database) => {
-  const tickets = buildRespository(db)
-  const screenings = buildScreeningsRepository(db)
-  const router = Router()
+  const tickets = buildRespository(db);
+  const screenings = buildScreeningsRepository(db);
+  const router = Router();
 
-  router
-    .route('/')
-    .get(
-      jsonRoute(async (req, res) => {
-        try {
-          const allTicketsData = await tickets.findAll()
+  router.get('/', jsonRoute(async (req, res, next) => {
+    try {
+      const allTicketsData = await tickets.findAll();
+      if (allTicketsData.length === 0) {
+        res.status(StatusCodes.NOT_FOUND).json({ message: 'No tickets found.' });
+      } else {
+        res.status(StatusCodes.OK).json(allTicketsData);
+      }
+    } catch (error) {
+      next(error);
+    }
+  }));
 
-          if (!allTicketsData) {
-            return res
-              .status(StatusCodes.NOT_FOUND)
-              .json({ error: 'No tickets found.' })
-          }
+  router.post('/', jsonRoute(async (req, res, next) => {
+    try {
+      const { userId, movieId, screeningId, total } = req.body;
+      const screeningData = await screenings.findById(screeningId);
 
-          return res.status(StatusCodes.OK).json(allTicketsData)
-        } catch (error) {
-          return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
-        }
-      })
-    )
-    .post(
-      jsonRoute(async (req, res) => {
-        try {
-          const { userId, movieId, screeningId, numTickets } = req.body
+      if (!screeningData || screeningData.numberOfTicketsLeft < total) {
+        res.status(StatusCodes.BAD_REQUEST).json({ message: 'Not enough tickets available.' });
+      } else {
+        const updateScreeningsTicketNum = screeningData.numberOfTicketsLeft - total;
+        await screenings.update(screeningId, { numberOfTicketsLeft: updateScreeningsTicketNum });
 
-          // check available tickets
-          const [screeningsData] = await screenings.findAll()
+        const currentDate = new Date();
+        const bookingTimestamp = currentDate.toISOString();
 
-          if (
-            !screeningsData ||
-            screeningsData.numberOfTicketsLeft < numTickets
-          ) {
-            return res.status(StatusCodes.NOT_FOUND).json({
-              message: 'Booking is SOLD OUT',
-            })
-          }
+        await tickets.create({ userId, movieId, screeningId, total, bookingTimestamp });
+        res.status(StatusCodes.CREATED).json({ message: 'Booked successfully!' });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }));
 
-          const updateScreeningsTicketNum: number =
-            screeningsData.numberOfTicketsLeft - numTickets
-
-          await screenings.update(screeningId, {
-            numberOfTicketsLeft: updateScreeningsTicketNum,
-          })
-
-          const currentDate = new Date()
-          const bookingTimestamp = currentDate.toISOString()
-
-          await tickets.create({
-            userId,
-            movieId,
-            screeningId,
-            numTickets,
-            bookingTimestamp,
-          })
-
-          // successfull message
-          return res
-            .status(StatusCodes.CREATED)
-            .json({ message: 'Booked successfully!' })
-        } catch (error) {
-          return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
-        }
-      })
-    )
-
-  return router
+  return router;
 }

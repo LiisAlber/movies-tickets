@@ -47,7 +47,7 @@ export interface Tickets {
   userId: number;
   movieId: number;
   screeningId: number;
-  numTickets: number;
+  total: number;
   bookingTimestamp: Generated<string>;
 }
 

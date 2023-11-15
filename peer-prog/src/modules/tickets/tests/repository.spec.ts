@@ -51,7 +51,7 @@ describe('findByUserId', () => {
         userId: 2,
         movieId: 3,
         screeningId: 1,
-        numTickets: 100,
+        total: 100,
         bookingTimestamp: '2023-11-01T08:32:15.182Z',
       }),
     ])
